@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.10...3.22)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+
+# for installation, install only custom find scripts which are not shipped by package
+# managers or cmake itself. This does not apply e.g. to eigen
+set(DEPENDENCY_MODULES ${CMAKE_CURRENT_LIST_DIR}/cmake/Findjsoncpp.cmake)
+
 include(DefaultBuildType)
 
 # configure vcpkg from environment variables, if present
@@ -108,5 +113,18 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/OusterSDKConfig.cmake"
   "${CMAKE_CURRENT_BINARY_DIR}/OusterSDKConfigVersion.cmake"
   DESTINATION lib/cmake/OusterSDK)
 
+# we install any custom dependency modules here
+install(FILES ${DEPENDENCY_MODULES}
+    DESTINATION lib/cmake/OusterSDK/Modules)
 install(FILES LICENSE LICENSE-bin
   DESTINATION share)
+
+# make uninstall
+add_custom_target("uninstall" COMMENT "Uninstall installed files")
+add_custom_command(
+    TARGET "uninstall"
+    POST_BUILD
+    COMMENT "Uninstall files with install_manifest.txt"
+    COMMAND xargs rm -vf < install_manifest.txt || echo Nothing in
+            install_manifest.txt to be uninstalled!
+)
